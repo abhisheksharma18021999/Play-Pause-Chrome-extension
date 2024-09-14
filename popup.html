@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Auto Pause Extension</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 270px;
+      height: 65px;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgb(71, 69, 69); /* Background color for the whole body */
+      border-radius: 10px; /* Rounded corners for the entire body */
+      overflow: hidden; /* Ensure that content does not overflow the rounded corners */
+    }
+    .container {
+      text-align: center;
+      color: rgb(4, 4, 4); /* Text color for everything inside the container */
+      background-color: rgb(255, 255, 255); /* Slightly different background color for the container */
+      padding: 10px; /* Padding inside the container */
+      border-radius: 10px; /* Rounded corners for the container */
+      box-shadow: 0px 2px 5px rgba(54, 1, 1, 0.3); /* Optional: adds a shadow to the container */
+      margin-right: 10px;
+      margin-left: 10px;
+    }
+    h3 {
+      font-size: 14px;
+      margin: 0; /* Remove default margin */
+      padding: 0; /* Remove default padding */
+    }
+    label {
+      font-size: 12px;
+      margin-right: 10px;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2); /* Make checkbox a bit larger */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <label for="toggleCheckbox">YouTube Auto Pause/Resume</label>
+    <input type="checkbox" id="toggleCheckbox" />
+  </div>
+
+  <script>
+    console.log('Loading popup js');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded and parsed');
+      const toggleCheckbox = document.getElementById('toggleCheckbox');
+
+      // Load the saved state and set the checkbox accordingly
+      chrome.storage.sync.get('enabled', (data) => {
+        const isEnabled = data.enabled !== undefined ? data.enabled : true;
+        toggleCheckbox.checked = isEnabled;
+        console.log('Checkbox initialized. Auto pause/resume is ' + (isEnabled ? 'enabled' : 'disabled'));
+      });
+
+      // Add change listener to toggle checkbox
+      toggleCheckbox.addEventListener('change', (event) => {
+        const isEnabled = event.target.checked;
+
+        // Save the updated state to Chrome storage
+        chrome.storage.sync.set({ enabled: isEnabled }, () => {
+          console.log('Checkbox changed. Auto pause/resume is ' + (isEnabled ? 'enabled' : 'disabled'));
+        });
+
+        // Send a message to content script to update its state
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs.length > 0) {
+            chrome.tabs.sendMessage(tabs[0].id, { action: 'toggleState', enabled: isEnabled });
+            console.log('Message sent to content script');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
